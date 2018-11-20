@@ -4,6 +4,8 @@ import time
 import requests
 import calendar
 import json
+import logging
+import sys
 
 DEFAULT_MAX_STEP_SIZE = 60 * 60 # in seconds
 DEFAULT_MIN_STEP_SIZE = 225 # in seconds
@@ -16,6 +18,7 @@ DEFAULT_REQUEST_ATTEMPTS = 10
 DEFAULT_BATCH_SIZE = 3000
 DEFAULT_PATH = "/data/"
 DEFAULT_ENCODING = 'utf8'
+DEFAULT_MESSAGE_PERIOD = 100
 
 # Получаем time в виде строки "YYYY-MM-DDTHH:mm:ss". Преобразуем в объект time
 # Запускаем на всем интевале, если found
@@ -31,6 +34,8 @@ class Worker:
     ids = []
     counter = 0 #
     statistic = None
+    logger = None
+    totalRecordsAmount = 0
 
     def __init__(self, startInterval, endInterval, stepSize = DEFAULT_MAX_STEP_SIZE):
         if (stepSize < DEFAULT_MIN_STEP_SIZE or stepSize > DEFAULT_MAX_STEP_SIZE):
@@ -52,6 +57,18 @@ class Worker:
         self.endInterval = self.convert_time_to_epoch_seconds(self.build_formated_time(endInterval))
         self.counter = 0
 
+        logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+        self.logger = logging.getLogger()
+
+        # fileHandler = logging.FileHandler("{0}/{1}.log".format(logPath, fileName))
+        # fileHandler.setFormatter(logFormatter)
+        # self.logger.addHandler(fileHandler)
+
+        consoleHandler = logging.StreamHandler()
+        consoleHandler.setFormatter(logFormatter)
+        self.logger.addHandler(consoleHandler)
+        self.logger.setLevel(logging.INFO)
+
     def api_req(self, body):
         if (not (self.counter < 10 )):
             time.sleep(0.5)
@@ -71,6 +88,7 @@ class Worker:
         if attemptsCounter >= DEFAULT_REQUEST_ATTEMPTS:
             self.statistic.incRequests("Bad")
             self.statistic.send_extra_statistic({"Bad request": body, "Attempts": attemptsCounter, "Response status code": response.status_code, "Response body": response.json()})
+            self.logger.debug("Amount of failed requests: {0}".format(self.statistic.badRequestsCounter))
         else:
             self.statistic.incRequests("Good")
         return response
@@ -114,12 +132,14 @@ class Worker:
                                             self.get_formatted_hr_time_string(start),
                                             self.get_formatted_hr_time_string(end))).json()
             self.retrieve_ids(response['items'])
+        self.logger.info("Retrieveed ids: {0} of {1}". format(len(self.ids), self.totalRecordsAmount))
 
 
     def check_found_records(self, response):
         return (response.json()['found'] <= DEFAULT_MAX_REC_RETURNED )
 
     def run(self):
+        self.logger.info("Start retrieving vacancies id")
         self.statistic.init_new_timer()
         response = self.api_req_safe('https://api.hh.ru/vacancies?per_page={0}&page={1}&date_from={2}&date_to={3}'
                                 .format(
@@ -127,6 +147,8 @@ class Worker:
                                         0,
                                         self.get_formatted_hr_time_string(self.startInterval),
                                         self.get_formatted_hr_time_string(self.endInterval)))
+        self.totalRecordsAmount = response.json()['found']
+        self.logger.info("Records found: {0}".format(self.totalRecordsAmount))
 
         if ( self.check_found_records(response) == True ):
             self.collect_pages(self.startInterval, self.endInterval)
@@ -165,15 +187,17 @@ class Worker:
         self.statistic.send_statistic(self.get_formatted_hr_time_string(self.startInterval),
                                       self.get_formatted_hr_time_string(self.endInterval),
                                       len(self.ids))
+        self.logger.info("Finish retrieving ids. Totally retrieved: {0} of {1}".format(len(self.ids), self.totalRecordsAmount))
         self.statistic.init_new_timer("Retrieving vacancies list")
         self.collect_vacancies()
         self.statistic.init_new_timer("Retrieving vacancies")
         print(len(self.ids))
 
     def collect_vacancies(self):
-        file = open(DEFAULT_PATH + self.get_formatted_hr_time_string(self.endInterval).replace(':', '-'), 'w')
+        file = open(DEFAULT_PATH + self.get_formatted_hr_time_string(self.endInterval).replace(':', '-') + '.json', 'w')
         vacancies = []
         counter = 0
+        dumpedCounter = 0
         for iter in self.ids:
             response = self.api_req_safe('https://api.hh.ru/vacancies/{0}'.format(iter))
 
@@ -181,18 +205,24 @@ class Worker:
                 continue
 
             vacancies.append(response.json())
+            if (counter % 100 == 0):
+                self.logger.info("Collected vacancies: {0} of {1}".format(dumpedCounter + counter, len(self.ids)))
             counter += 1
 
             if (counter >= DEFAULT_BATCH_SIZE):
                 file.write(json.dumps(vacancies, ensure_ascii = False))
+                dumpedCounter += counter
+                self.logger.info("Dumped vacancies: {0} of {1}".format(dumpedCounter, len(self.ids)))
                 counter = 0
                 vacancies = []
 
-        print(vacancies)
         if (counter > 0):
             file.write(json.dumps(vacancies, ensure_ascii = False))
+            dumpedCounter += counter
+            self.logger.info("Dumped vacancies: {0} of {1}".format(dumpedCounter, len(self.ids)))
             counter = 0
             vacancies = []
+        self.logger.info("Dumping finished. Dumped vacanices: {0} of found {1}".format(dumpedCounter, self.totalRecordsAmount))
 
 
 
