@@ -209,15 +209,23 @@ class Worker:
                 self.logger.info("Collected vacancies: {0} of {1}".format(dumpedCounter + counter, len(self.ids)))
             counter += 1
 
-            if (counter >= DEFAULT_BATCH_SIZE):
-                file.write(json.dumps(vacancies, ensure_ascii = False))
-                dumpedCounter += counter
-                self.logger.info("Dumped vacancies: {0} of {1}".format(dumpedCounter, len(self.ids)))
-                counter = 0
-                vacancies = []
+            # if (counter >= DEFAULT_BATCH_SIZE):
+            #     file.write(json.dumps(vacancies, ensure_ascii = False))
+            #     dumpedCounter += counter
+            #     self.logger.info("Dumped vacancies: {0} of {1}".format(dumpedCounter, len(self.ids)))
+            #     counter = 0
+            #     vacancies = []
 
         if (counter > 0):
-            file.write(json.dumps(vacancies, ensure_ascii = False))
+            # file.write("{ \"Items\": ")
+            # file.write(json.dumps(vacancies, ensure_ascii = False))
+            # file.write(", ")
+            # file.write("\"Found\": {0}, \"Collected\": {1}, \"Statistic\": \"Statistic\"".format(self.totalRecordsAmount, len(self.ids)))
+            # file.write("}")
+            file.write("{{ \"Items\": {0}, \"Found\": {1}, \"Collected\": {2}, \"Statistic\": \"Statistic\" }}"
+                       .format(json.dumps(vacancies, ensure_ascii = False),
+                               self.totalRecordsAmount,
+                               len(self.ids)))
             dumpedCounter += counter
             self.logger.info("Dumped vacancies: {0} of {1}".format(dumpedCounter, len(self.ids)))
             counter = 0
