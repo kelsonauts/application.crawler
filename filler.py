@@ -34,7 +34,7 @@ if __name__ == "__main__":
     while (epochStart < epochEnd):
         localEnd = epochStart + secInDay
 
-        msg = '{{ "Start": {0}, "End": {1} }}'.format(time.strftime(worker.DEFAULT_FORMAT, time.gmtime(epochStart)),
+        msg = '{{ "Start": "{0}", "End": "{1}" }}'.format(time.strftime(worker.DEFAULT_FORMAT, time.gmtime(epochStart)),
                                                       time.strftime(worker.DEFAULT_FORMAT, time.gmtime(localEnd))
                                                       )
         response = client.send_message(QueueUrl = sqsUrl, MessageBody = msg, MessageGroupId = generate_random_string(10))

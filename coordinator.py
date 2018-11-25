@@ -23,8 +23,8 @@ if __name__ == "__main__":
             receiptHandle = msg['ReceiptHandle']
             start = body['Start']
             end = body['End']
-            worker = worker.Worker(start, end)
-            worker.run()
+            crawler = worker.Worker(start, end)
+            crawler.run()
             os.system("aws s3 cp /data s3://infrastructure-storages-useast1-s3bucket/data/ --recursive")
             client.delete_message(QueueUrl = sqsUrl, ReceiptHandle = receiptHandle)
     except Exception:
