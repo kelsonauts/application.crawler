@@ -11,7 +11,7 @@ import traceback
 
 if __name__ == "__main__":
     try:
-        client = boto3.client('sqs')
+        client = boto3.client('sqs', region_name='us-east-1')
         sqsUrl = client.get_queue_url(QueueName = "infrastructure-crawler-sqs-useast1.fifo")['QueueUrl']
         while(True):
             response = client.receive_message(QueueUrl=sqsUrl, MaxNumberOfMessages=1)
