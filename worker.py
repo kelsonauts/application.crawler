@@ -136,14 +136,16 @@ class Worker:
                                             self.get_formatted_hr_time_string(start),
                                             self.get_formatted_hr_time_string(end))).json()
             self.retrieve_ids(response['items'])
-        self.logger.info("Retrieveed ids: {0} of {1}". format(len(self.ids), self.totalRecordsAmount))
+        self.logger.info("Retrieved ids: {0} of {1}". format(len(self.ids), self.totalRecordsAmount))
 
 
     def check_found_records(self, response):
         return (response.json()['found'] <= DEFAULT_MAX_REC_RETURNED )
 
     def run(self):
-        self.logger.info("Start retrieving vacancies id")
+        self.logger.info("Start retrieving vacancies id. Global interval for worker is: from {0} to {1}"
+                         .format(self.get_formatted_hr_time_string(self.startInterval),
+                                 self.get_formatted_hr_time_string(self.endInterval)))
         self.statistic.init_new_timer()
         response = self.api_req_safe('https://api.hh.ru/vacancies?per_page={0}&page={1}&date_from={2}&date_to={3}'
                                 .format(
@@ -192,6 +194,7 @@ class Worker:
                                       self.get_formatted_hr_time_string(self.endInterval),
                                       len(self.ids))
         self.logger.info("Finish retrieving ids. Totally retrieved: {0} of {1}".format(len(self.ids), self.totalRecordsAmount))
+        self.logger.info("Current step size: {0}, minimal step size: {1}, maximal step size {2}".format(self.stepSize, DEFAULT_MIN_STEP_SIZE, DEFAULT_MAX_STEP_SIZE))
         self.statistic.init_new_timer("Retrieving vacancies list")
         self.collect_vacancies()
         self.statistic.init_new_timer("Retrieving vacancies")
