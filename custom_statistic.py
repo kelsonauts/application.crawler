@@ -1,4 +1,5 @@
 import time
+import json
 import calendar
 
 class Statistic:
@@ -28,14 +29,19 @@ class Statistic:
             raise Exception("Argument 'type': {0} must be either 'Good' or 'Bad'".format(type))
 
     def send_statistic(self, startInterval, endInterval, recAmount):
-        self.timeIntervals.append((startInterval, endInterval, recAmount))
+        self.gotRecordsPerTimeInterval.append({ "Start": startInterval, "End": endInterval, "RecAmount": recAmount})
 
     def send_extra_statistic(self, body):
         self.extraStats.append(body)
 
     def to_json(self):
-        tmp = {"GoodRequestCounter": self.goodRequestsCounter,
-                  "BadRequestCounter": self.badRequestsCounter,
-                  "RecordsPerTimeIntervals": self.gotRecordsPerTimeInterval,
-                  "TimeIntervals": self.timeIntervals}
+        # tmp = {"GoodRequestCounter": self.goodRequestsCounter,
+        #           "BadRequestCounter": self.badRequestsCounter,
+        #           "RecordsPerTimeIntervals": self.gotRecordsPerTimeInterval,
+        #           "TimeIntervals": self.timeIntervals}
+        tmp = "{{ \"GoodRequestCounter\": {0}, \"BadRequestCounter\": {1}, \"RecordsPerTimeIntervals\": {2}, \"TimeIntervals\": {3} }}"\
+            .format(self.goodRequestsCounter,
+                    self.badRequestsCounter,
+                    json.dumps(self.gotRecordsPerTimeInterval, ensure_ascii=False),
+                    json.dumps(self.timeIntervals, ensure_ascii=False))
         return tmp

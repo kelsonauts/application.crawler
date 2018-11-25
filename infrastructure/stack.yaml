@@ -1,0 +1,131 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  Resources to launch crawler (SQS, ASG, CloudWatchMetrics)
+
+Parameters:
+  AmiId:
+    Type: String
+    Description: Ami id for crawler instances
+    Default: ami-009d6802948d06e52
+
+  CrawlerInstanceType:
+    Type: String
+    Description: Crawler instance Type
+    Default: t2.micro
+
+  KeyPair:
+    Type: String
+    Description: ssh private keys to connect to crawler instances
+    Default: kp-useast1
+
+Resources:
+  CrawlerASG:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      AutoScalingGroupName: "infrastructure-crawler-asg-useast1"
+      Cooldown: 300
+      DesiredCapacity: 0
+      HealthCheckGracePeriod: 120
+      HealthCheckType: EC2
+      LaunchConfigurationName: !Ref CrawlerLaunchConfiguration
+      MinSize: 0
+      MaxSize: 3
+      Tags:
+        - Key: Purpose
+          Value: crawler
+          PropagateAtLaunch: True
+      VPCZoneIdentifier:
+        - !ImportValue VpcASubnetB
+
+  CrawlerLaunchConfiguration:
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties:
+      AssociatePublicIpAddress: true
+      # IamInstanceProfile: 
+      ImageId: !Ref AmiId
+      InstanceType: !Ref CrawlerInstanceType
+      KeyName: !Ref KeyPair
+      LaunchConfigurationName: "infrastructure-crawler-lc-useast1"
+      SecurityGroups:
+        - !ImportValue JenkinsSG
+      UserData:
+        Fn::Base64:
+          Fn::Sub:
+            - |
+              #!/bin/bash -xe
+              sudo yum update -y
+              sudo yum install -y python3 python3-pip
+              
+              # aws s3 cp s3://${BUCKET}/src/ . --recursive
+            - { "BUCKET": !ImportValue BigDataS3Bucket}
+
+  CrawlerSQS:
+    Type: "AWS::SQS::Queue"
+    Properties:
+      ContentBasedDeduplication: true
+      FifoQueue: true
+      QueueName: "infrastructure-crawler-sqs-useast1.fifo"
+      # ReceiveMessageWaitTimeSeconds: Integer
+      Tags:
+        - Key: Purpose
+          Value: crawler 
+      VisibilityTimeout: 21600 # 6 hours in seconds
+
+  CrawlerScalingOutPolicy:
+    Type: "AWS::AutoScaling::ScalingPolicy"
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref CrawlerASG
+      MetricAggregationType: Maximum
+      PolicyType: StepScaling
+      StepAdjustments:
+        -
+          MetricIntervalLowerBound: 0
+          ScalingAdjustment: 1
+
+  CrawlerScalingOutAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: !Sub "SQS for crawler is not empty"
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      AlarmActions:
+        - !Ref CrawlerScalingOutPolicy
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt CrawlerSQS.QueueName
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+
+  CrawlerScalingInPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ExactCapacity
+      AutoScalingGroupName: !Ref CrawlerASG
+      MetricAggregationType: Maximum
+      PolicyType: StepScaling
+      StepAdjustments:
+        -
+          MetricIntervalUpperBound: 0
+          ScalingAdjustment: 0
+
+  CrawlerScalingInAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: !Sub "SQS for crawler is empty"
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      AlarmActions:
+        - !Ref CrawlerScalingInPolicy
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt CrawlerSQS.QueueName
+      ComparisonOperator: LessThanOrEqualToThreshold

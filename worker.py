@@ -17,6 +17,7 @@ DEFAULT_FORMAT = "%Y-%m-%dT%H:%M:%S"
 DEFAULT_REQUEST_ATTEMPTS = 10
 DEFAULT_BATCH_SIZE = 3000
 DEFAULT_PATH = "/data/"
+DEFAULT_LOG_PATH = "/data/"
 DEFAULT_ENCODING = 'utf8'
 DEFAULT_MESSAGE_PERIOD = 100
 
@@ -37,7 +38,7 @@ class Worker:
     logger = None
     totalRecordsAmount = 0
 
-    def __init__(self, startInterval, endInterval, stepSize = DEFAULT_MAX_STEP_SIZE):
+    def __init__(self, startInterval, endInterval, logger = None, stepSize = DEFAULT_MAX_STEP_SIZE):
         if (stepSize < DEFAULT_MIN_STEP_SIZE or stepSize > DEFAULT_MAX_STEP_SIZE):
             raise Exception(("Size step '{0}' must be larger than minimal step size '{1}' and it must be smaller than {2}".
                              format(stepSize, DEFAULT_MIN_STEP_SIZE, DEFAULT_MAX_STEP_SIZE)))
@@ -57,21 +58,24 @@ class Worker:
         self.endInterval = self.convert_time_to_epoch_seconds(self.build_formated_time(endInterval))
         self.counter = 0
 
-        logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
-        self.logger = logging.getLogger()
+        self.logger = logger
 
-        # fileHandler = logging.FileHandler("{0}/{1}.log".format(logPath, fileName))
-        # fileHandler.setFormatter(logFormatter)
-        # self.logger.addHandler(fileHandler)
+        if (self.logger == None):
+            logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+            self.logger = logging.getLogger()
 
-        consoleHandler = logging.StreamHandler()
-        consoleHandler.setFormatter(logFormatter)
-        self.logger.addHandler(consoleHandler)
-        self.logger.setLevel(logging.INFO)
+            fileHandler = logging.FileHandler("{0}/{1}.log".format(DEFAULT_LOG_PATH, endInterval).replace(':', '-'))
+            fileHandler.setFormatter(logFormatter)
+            self.logger.addHandler(fileHandler)
+
+            consoleHandler = logging.StreamHandler()
+            consoleHandler.setFormatter(logFormatter)
+            self.logger.addHandler(consoleHandler)
+            self.logger.setLevel(logging.INFO)
 
     def api_req(self, body):
         if (not (self.counter < 10 )):
-            time.sleep(0.5)
+            time.sleep(DEFAULT_DELAY)
             self.counter = 0
 
         self.counter += 1
@@ -191,7 +195,6 @@ class Worker:
         self.statistic.init_new_timer("Retrieving vacancies list")
         self.collect_vacancies()
         self.statistic.init_new_timer("Retrieving vacancies")
-        print(len(self.ids))
 
     def collect_vacancies(self):
         file = open(DEFAULT_PATH + self.get_formatted_hr_time_string(self.endInterval).replace(':', '-') + '.json', 'w')
@@ -222,10 +225,11 @@ class Worker:
             # file.write(", ")
             # file.write("\"Found\": {0}, \"Collected\": {1}, \"Statistic\": \"Statistic\"".format(self.totalRecordsAmount, len(self.ids)))
             # file.write("}")
-            file.write("{{ \"Items\": {0}, \"Found\": {1}, \"Collected\": {2}, \"Statistic\": \"Statistic\" }}"
+            file.write("{{ \"Items\": {0}, \"Found\": {1}, \"Collected\": {2}, \"Statistic\": {3} }}"
                        .format(json.dumps(vacancies, ensure_ascii = False),
                                self.totalRecordsAmount,
-                               len(self.ids)))
+                               len(self.ids),
+                               self.statistic.to_json()))
             dumpedCounter += counter
             self.logger.info("Dumped vacancies: {0} of {1}".format(dumpedCounter, len(self.ids)))
             counter = 0
