@@ -11,6 +11,15 @@ class Statistic:
 
     extraStats = [] #For collecting custom statistic not implemented in this class
 
+    def __del__(self):
+        self.goodRequestsCounter = 0
+        self.badRequestsCounter = 0
+        self.timeStart = None
+        del self.gotRecordsPerTimeInterval[:]
+        del self.timeIntervals[:]
+
+        self.extraStats = []  # For collecting custom statistic not implemented in this class
+
     def init_new_timer(self, description = ""):
         if (self.timeStart != None):
             timeEnd = time.time()

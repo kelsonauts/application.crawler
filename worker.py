@@ -21,11 +21,11 @@ DEFAULT_LOG_PATH = "/data/"
 DEFAULT_ENCODING = 'utf8'
 DEFAULT_MESSAGE_PERIOD = 100
 
-# Получаем time в виде строки "YYYY-MM-DDTHH:mm:ss". Преобразуем в объект time
+# Получаем time в виде строки "YYYY-MM-DDTHH-mm-ss". Преобразуем в объект time
 # Запускаем на всем интевале, если found
 
 
-# This class uses epoch time format "YYYY-MM-DDTHH:mm:ss". Times stores as ints
+# This class uses epoch time format "YYYY-MM-DDTHH-mm-ss". Times stores as ints
 class Worker:
     stepSize = None #In seconds
     startInterval = None
@@ -37,6 +37,18 @@ class Worker:
     statistic = None
     logger = None
     totalRecordsAmount = 0
+
+    def __del__(self):
+        self.stepSize = None  # In seconds
+        self.startInterval = None
+        self.endInterval = None
+        self.startLocalInterval = None
+        self.endLocalInterval = None
+        del self.ids[:]
+        self.counter = 0  #
+        self.statistic = None
+        self.logger = None
+        self.totalRecordsAmount = 0
 
     def __init__(self, startInterval, endInterval, logger = None, stepSize = DEFAULT_MAX_STEP_SIZE):
         if (stepSize < DEFAULT_MIN_STEP_SIZE or stepSize > DEFAULT_MAX_STEP_SIZE):
@@ -58,11 +70,12 @@ class Worker:
         self.endInterval = self.convert_time_to_epoch_seconds(self.build_formated_time(endInterval))
         self.counter = 0
 
+
         self.logger = logger
 
         if (self.logger == None):
             logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
-            self.logger = logging.getLogger()
+            self.logger = logging.getLogger(endInterval)
 
             fileHandler = logging.FileHandler("{0}/{1}.log".format(DEFAULT_LOG_PATH, endInterval).replace(':', '-'))
             fileHandler.setFormatter(logFormatter)
@@ -153,6 +166,8 @@ class Worker:
                                         0,
                                         self.get_formatted_hr_time_string(self.startInterval),
                                         self.get_formatted_hr_time_string(self.endInterval)))
+        if (response.status_code != 200):
+            self.logger.error("Failed to retrieve vacancies. ResponseCode: {0}. ResponseBody: {1}".format(response.status_code, response.json()))
         self.totalRecordsAmount = response.json()['found']
         self.logger.info("Records found: {0}".format(self.totalRecordsAmount))
 
@@ -198,6 +213,7 @@ class Worker:
         self.statistic.init_new_timer("Retrieving vacancies list")
         self.collect_vacancies()
         self.statistic.init_new_timer("Retrieving vacancies")
+        self.__del__()
 
     def collect_vacancies(self):
         file = open(DEFAULT_PATH + self.get_formatted_hr_time_string(self.endInterval).replace(':', '-') + '.json', 'w')

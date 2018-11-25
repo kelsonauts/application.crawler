@@ -25,6 +25,7 @@ if __name__ == "__main__":
             end = body['End']
             crawler = worker.Worker(start, end)
             crawler.run()
+            crawler = None
             os.system("aws s3 cp /data s3://infrastructure-storages-useast1-s3bucket/data/ --recursive")
             client.delete_message(QueueUrl = sqsUrl, ReceiptHandle = receiptHandle)
     except Exception:

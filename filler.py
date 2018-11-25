@@ -23,7 +23,7 @@ if __name__ == "__main__":
     if (len(latest) == 0):
         latest = start
     else:
-        latest = (datetime.datetime.strptime(latest[0][:19], worker.DEFAULT_FORMAT) + datetime.timedelta(seconds=1)).strftime(worker.DEFAULT_FORMAT)
+        latest = (datetime.datetime.strptime(latest[0][:19], "%Y-%m-%dT%H-%M-%S") + datetime.timedelta(seconds=1)).strftime(worker.DEFAULT_FORMAT)
     epochEnd = calendar.timegm(time.strptime(end, worker.DEFAULT_FORMAT))
     epochStart = calendar.timegm(time.strptime(start, worker.DEFAULT_FORMAT))
     epochLatest = calendar.timegm(time.strptime(latest, worker.DEFAULT_FORMAT))
