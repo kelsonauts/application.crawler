@@ -19,6 +19,11 @@ Parameters:
     Description: ssh private keys to connect to crawler instances
     Default: kp-useast1
 
+  MaxCapacity:
+    Type: Number
+    Description: Max capacity of asg
+    Default: 3
+
 Resources:
   CrawlerASG:
     Type: "AWS::AutoScaling::AutoScalingGroup"
@@ -30,7 +35,7 @@ Resources:
       HealthCheckType: EC2
       LaunchConfigurationName: !Ref CrawlerLaunchConfiguration
       MinSize: 0
-      MaxSize: 3
+      MaxSize: !Ref MaxCapacity
       Tags:
         - Key: Purpose
           Value: crawler
@@ -38,15 +43,21 @@ Resources:
       VPCZoneIdentifier:
         - !ImportValue VpcASubnetB
 
+  CrawlerIAMProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: /
+      Roles:
+        - CrawlerWorker
+
   CrawlerLaunchConfiguration:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Properties:
       AssociatePublicIpAddress: true
-      # IamInstanceProfile: 
+      IamInstanceProfile: !Ref CrawlerIAMProfile
       ImageId: !Ref AmiId
       InstanceType: !Ref CrawlerInstanceType
       KeyName: !Ref KeyPair
-      LaunchConfigurationName: "infrastructure-crawler-lc-useast1"
       SecurityGroups:
         - !ImportValue JenkinsSG
       UserData:
@@ -63,8 +74,9 @@ Resources:
               sudo chmod -R 777 /data
               mkdir /data/coordinators
 
-              # aws s3 cp s3://${BUCKET}/src/ . --recursive
-              # python3 -m coordinator.py
+              aws s3 cp s3://${BUCKET}/src/ . --recursive
+              sudo pip3 install -r requirements.txt
+              python3 coordinator.py
 
               while [[ "True" != $(aws autoscaling set-instance-protection --region ${AWS::Region} --instance-ids $INSTANCE_ID --auto-scaling-group-name ${NameASG} --no-protected-from-scale-in && echo "True" || echo "False") ]]; do sleep 5; done
               sleep 300
