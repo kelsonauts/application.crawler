@@ -12,7 +12,7 @@ Parameters:
   CrawlerInstanceType:
     Type: String
     Description: Crawler instance Type
-    Default: t2.micro
+    Default: t2.medium
 
   KeyPair:
     Type: String
@@ -79,7 +79,6 @@ Resources:
               python3 coordinator.py
 
               while [[ "True" != $(aws autoscaling set-instance-protection --region ${AWS::Region} --instance-ids $INSTANCE_ID --auto-scaling-group-name ${NameASG} --no-protected-from-scale-in && echo "True" || echo "False") ]]; do sleep 5; done
-              sleep 300
               sudo poweroff
 
             - { "BUCKET": !ImportValue BigDataS3Bucket, "NameASG": "infrastructure-crawler-asg-useast1"}
