@@ -22,7 +22,7 @@ Parameters:
   MaxCapacity:
     Type: Number
     Description: Max capacity of asg
-    Default: 3
+    Default: 5
 
 Resources:
   CrawlerASG:
