@@ -24,9 +24,10 @@ if __name__ == "__main__":
         latest = start
     else:
         latest = (datetime.datetime.strptime(latest[0][:19], "%Y-%m-%dT%H-%M-%S") + datetime.timedelta(seconds=1)).strftime(worker.DEFAULT_FORMAT)
+    print("Latest: {}".format(latest))
     epochEnd = calendar.timegm(time.strptime(end, worker.DEFAULT_FORMAT))
-    epochStart = calendar.timegm(time.strptime(start, worker.DEFAULT_FORMAT))
     epochLatest = calendar.timegm(time.strptime(latest, worker.DEFAULT_FORMAT))
+    epochStart = epochLatest
 
     client = boto3.client('sqs')
     sqsUrl = client.get_queue_url(QueueName="infrastructure-crawler-sqs-useast1.fifo")['QueueUrl']
