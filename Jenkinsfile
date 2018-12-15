@@ -38,6 +38,8 @@ node(nodeLabel) {
 			python src/filler.py
 			""",
 			returnStdout: true)
+		} else {
+			print("Skipping stage...")
 		}
 	}
 }
