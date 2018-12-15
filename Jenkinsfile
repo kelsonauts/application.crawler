@@ -4,7 +4,7 @@ nodeLabel = 'linux'
 
 node(nodeLabel) {
 	properties([
-		paramters([
+		parameters([
 			booleanParam(name: 'deployStack', defaultValue: false, description: "Deploy crawler stack"),
 			booleanParam(name: 'fillSqs', defaultValue: false, description: "Fill sqs to start crawling data. Requires stack to be deployed and storage to be available")
 		])
