@@ -1,5 +1,8 @@
 #!/bin/bash -xe
 
+#Move to directory with script
+cd $(dirname $0)
+
 STACK_NAME="crawler"
 TEMPLATE_NAME="stack.yaml"
 

@@ -1,6 +1,36 @@
-node('linux') {
-	stage('Hello world stage') {
-		def string = "Hello world"
-		print(string)
+#!Groovy
+
+nodeLabel = 'linux'
+
+node(nodeLabel) {
+	properties([
+		paramters([
+			booleanParam(name: deployStack, defaultValue: false, description: "Deploy crawler stack"),
+			booleanParam(name: fillSqs, defaultValue: false, description: "Fill sqs to start crawling data. Requires stack to be deployed and storage to be available")
+		])
+	])
+	stage('Push scripts to s3') {
+		result = sh(script: """
+			aws s3 sync src s3://infrastructure-storages-useast1-s3bucket/
+			aws s3 cp requirements.py s3://infrastructure-storages-useast1-s3bucket/src/
+			""",
+			returnStdout: true)
+	}
+
+	stage('Deploy stack') {
+		if (params.deployStack as Boolean) {
+		result = sh(script: """
+			./infrastructure/deploy.sh
+			""",
+			returnStdout: true)
+		} else {
+			print("Skipping stage...")
+		}
+	}
+
+	stage('Fill sqs') {
+		if (params.fillSqs as Boolean) {
+			
+		}
 	}
 }
