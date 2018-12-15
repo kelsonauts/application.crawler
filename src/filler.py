@@ -29,7 +29,7 @@ if __name__ == "__main__":
     epochLatest = calendar.timegm(time.strptime(latest, worker.DEFAULT_FORMAT))
     epochStart = epochLatest
 
-    client = boto3.client('sqs')
+    client = boto3.client('sqs', region_name="us-east-1")
     sqsUrl = client.get_queue_url(QueueName="infrastructure-crawler-sqs-useast1.fifo")['QueueUrl']
 
     while (epochStart < epochEnd):
