@@ -8,8 +8,9 @@ TEMPLATE_NAME="stack.yaml"
 
 if [[ `aws cloudformation describe-stacks --region us-east-1 | jq ".Stacks[] | select(.StackName == \"${STACK_NAME}\")"` ]]; then 
 	aws cloudformation update-stack --stack-name "${STACK_NAME}" --region us-east-1  \
-		--template-body file://"${TEMPLATE_NAME}" --capabilities CAPABILITY_IAM
-	aws cloudformation wait stack-update-complete --stack-name "${STACK_NAME}" --region us-east-1
+		--template-body file://"${TEMPLATE_NAME}" --capabilities CAPABILITY_IAM && \
+	aws cloudformation wait stack-update-complete --stack-name "${STACK_NAME}" --region us-east-1 || \
+	echo "Can't perform stack update"
 else
 	aws cloudformation create-stack --stack-name "${STACK_NAME}" --region us-east-1  \
 		--template-body file://"${TEMPLATE_NAME}" --capabilities CAPABILITY_IAM
