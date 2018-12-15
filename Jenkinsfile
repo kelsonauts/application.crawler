@@ -5,8 +5,8 @@ nodeLabel = 'linux'
 node(nodeLabel) {
 	properties([
 		paramters([
-			booleanParam(name: deployStack, defaultValue: false, description: "Deploy crawler stack"),
-			booleanParam(name: fillSqs, defaultValue: false, description: "Fill sqs to start crawling data. Requires stack to be deployed and storage to be available")
+			booleanParam(name: 'deployStack', defaultValue: false, description: "Deploy crawler stack"),
+			booleanParam(name: 'fillSqs', defaultValue: false, description: "Fill sqs to start crawling data. Requires stack to be deployed and storage to be available")
 		])
 	])
 	stage('Push scripts to s3') {
@@ -30,7 +30,10 @@ node(nodeLabel) {
 
 	stage('Fill sqs') {
 		if (params.fillSqs as Boolean) {
-			
+			result = sh(script: """
+			python src/filler.py
+			""",
+			returnStdout: true)
 		}
 	}
 }
