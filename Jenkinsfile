@@ -35,7 +35,7 @@ node(nodeLabel) {
 	stage('Fill sqs') {
 		if (params.fillSqs as Boolean) {
 			result = sh(script: """
-			python src/filler.py
+			python3 src/filler.py
 			""",
 			returnStdout: true)
 		} else {
