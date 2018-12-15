@@ -21,9 +21,6 @@ DEFAULT_LOG_PATH = "/data/"
 DEFAULT_ENCODING = 'utf8'
 DEFAULT_MESSAGE_PERIOD = 100
 
-# Получаем time в виде строки "YYYY-MM-DDTHH-mm-ss". Преобразуем в объект time
-# Запускаем на всем интевале, если found
-
 
 # This class uses epoch time format "YYYY-MM-DDTHH-mm-ss". Times stores as ints
 class Worker:
