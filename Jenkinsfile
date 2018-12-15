@@ -15,7 +15,7 @@ node(nodeLabel) {
 	}
 	stage('Push scripts to s3') {
 		result = sh(script: """
-			aws s3 sync src/ s3://infrastructure-storages-useast1-s3bucket/
+			aws s3 sync src/ s3://infrastructure-storages-useast1-s3bucket/src/
 			aws s3 cp requirements.py s3://infrastructure-storages-useast1-s3bucket/src/
 			""",
 			returnStdout: true)
