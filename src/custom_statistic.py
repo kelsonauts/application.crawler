@@ -44,10 +44,10 @@ class Statistic:
         self.extraStats.append(body)
 
     def to_json(self):
-        # tmp = "{{ \"GoodRequestCounter\": {0}, \"BadRequestCounter\": {1}, \"RecordsPerTimeIntervals\": {2}, \"TimeIntervals\": {3} }}"\
-        #     .format(self.goodRequestsCounter,
-        #             self.badRequestsCounter,
-        #             json.dumps(self.gotRecordsPerTimeInterval, ensure_ascii=False),
-        #             json.dumps(self.timeIntervals, ensure_ascii=False))
-        tmp = '{ "Object": "None" }'
+        tmp = "{{ \"GoodRequestCounter\": {0}, \"BadRequestCounter\": {1}, \"RecordsPerTimeIntervals\": {2}, \"TimeIntervals\": {3} }}"\
+            .format(self.goodRequestsCounter,
+                    self.badRequestsCounter,
+                    json.dumps(self.gotRecordsPerTimeInterval, ensure_ascii=False),
+                    json.dumps(self.timeIntervals, ensure_ascii=False))
+        # tmp = '{ "Object": "None" }'
         return tmp

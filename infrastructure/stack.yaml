@@ -70,9 +70,9 @@ Resources:
 
               sudo yum update -y
               sudo yum install -y python3 python3-pip
-              sudo mkdir /data
-              sudo chmod -R 777 /data
-              mkdir /data/coordinators
+              sudo mkdir /new-data
+              sudo chmod -R 777 /new-data
+              mkdir /new-data/coordinators
 
               aws s3 cp s3://${BUCKET}/src/ . --recursive
               sudo pip3 install -r requirements.txt

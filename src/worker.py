@@ -16,8 +16,8 @@ DEFAULT_DELAY = 0 # to avoid limit in 10 requests per sec per ip
 DEFAULT_FORMAT = "%Y-%m-%dT%H:%M:%S"
 DEFAULT_REQUEST_ATTEMPTS = 10
 DEFAULT_BATCH_SIZE = 3000
-DEFAULT_PATH = "/data/"
-DEFAULT_LOG_PATH = "/data/"
+DEFAULT_PATH = "/new-data/"
+DEFAULT_LOG_PATH = "/new-data/"
 DEFAULT_ENCODING = 'utf8'
 DEFAULT_MESSAGE_PERIOD = 100
 
@@ -228,28 +228,34 @@ class Worker:
                 self.logger.info("Collected vacancies: {0} of {1}".format(dumpedCounter + counter, len(self.ids)))
             counter += 1
 
-            # if (counter >= DEFAULT_BATCH_SIZE):
-            #     file.write(json.dumps(vacancies, ensure_ascii = False))
-            #     dumpedCounter += counter
-            #     self.logger.info("Dumped vacancies: {0} of {1}".format(dumpedCounter, len(self.ids)))
-            #     counter = 0
-            #     vacancies = []
+            if (counter >= DEFAULT_BATCH_SIZE):
+                file.write(json.dumps(vacancies, ensure_ascii = False))
+                dumpedCounter += counter
+                self.logger.info("Dumped vacancies: {0} of {1}".format(dumpedCounter, len(self.ids)))
+                counter = 0
+                self.logger.info("Cleaning vacancy list... Current size: {0}".format(sys.getsizeof(vacancies)))
+                vacancies = []
+                self.logger.info("Vacancy list size after cleaning: {0}".format(sys.getsizeof(vacancies)))
 
         if (counter > 0):
             # file.write("{ \"Items\": ")
-            # file.write(json.dumps(vacancies, ensure_ascii = False))
+            file.write(json.dumps(vacancies, ensure_ascii = False))
+
+            self.logger.info("Cleaning vacancy list... Current size: {0}".format(sys.getsizeof(vacancies)))
+            vacancies = []
+            self.logger.info("Vacancy list size after cleaning: {0}".format(sys.getsizeof(vacancies)))
+
             # file.write(", ")
-            # file.write("\"Found\": {0}, \"Collected\": {1}, \"Statistic\": \"Statistic\"".format(self.totalRecordsAmount, len(self.ids)))
-            # file.write("}")
-            file.write("{{ \"Items\": {0}, \"Found\": {1}, \"Collected\": {2}, \"Statistic\": {3} }}"
-                       .format(json.dumps(vacancies, ensure_ascii = False),
-                               self.totalRecordsAmount,
-                               len(self.ids),
-                               self.statistic.to_json()))
+            file.write("[ {{ \"Found\": {0}, \"Collected\": {1}, \"Statistic\": {2} }} ]".format(self.totalRecordsAmount, len(self.ids), self.statistic.to_json()))
+
+            # file.write("{{ \"Items\": {0}, \"Found\": {1}, \"Collected\": {2}, \"Statistic\": {3} }}"
+            #            .format(json.dumps(vacancies, ensure_ascii = False),
+            #                    self.totalRecordsAmount,
+            #                    len(self.ids),
+            #                    self.statistic.to_json()))
             dumpedCounter += counter
             self.logger.info("Dumped vacancies: {0} of {1}".format(dumpedCounter, len(self.ids)))
             counter = 0
-            vacancies = []
         self.logger.info("Dumping finished. Dumped vacanices: {0} of found {1}".format(dumpedCounter, self.totalRecordsAmount))
 
 

@@ -10,6 +10,9 @@ import traceback
 # {"Start": "2018-10-30T00:00:00", "End": "2018-10-30T00:59:59"}
 
 if __name__ == "__main__":
+    # crawler = worker.Worker('2018-12-14T00:00:00', '2018-12-14T01:00:00')
+    # crawler.run()
+
     try:
         client = boto3.client('sqs', region_name='us-east-1')
         sqsUrl = client.get_queue_url(QueueName = "infrastructure-crawler-sqs-useast1.fifo")['QueueUrl']
