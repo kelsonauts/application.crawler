@@ -30,13 +30,13 @@ if __name__ == "__main__":
         crawler = worker.Worker(start, end)
         crawler.run()
         crawler = None
-        os.system("aws s3 cp /data s3://infrastructure-storages-useast1-s3bucket/data/ --recursive")
+        os.system("aws s3 cp /new-data s3://infrastructure-storages-useast1-s3bucket/new-data/ --recursive")
         client.delete_message(QueueUrl = sqsUrl, ReceiptHandle = receiptHandle)
     except Exception:
         logging.error("Got an exception")
         logging.error(traceback.print_exc())
     finally:
-        os.system("aws s3 cp /data s3://infrastructure-storages-useast1-s3bucket/data/ --recursive")
+        os.system("aws s3 cp /new-data s3://infrastructure-storages-useast1-s3bucket/new-data/ --recursive")
 
 
     # worker = worker.Worker("2018-10-30T00:00:00", "2018-10-30T23:59:59")

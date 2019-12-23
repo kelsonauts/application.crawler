@@ -18,7 +18,7 @@ if __name__ == "__main__":
     secInDay = 86399.0
     end = (datetime.datetime.fromtimestamp(time.time()) - datetime.timedelta(days=1)).strftime("%Y-%m-%d") + "T23:59:59"
     start = (datetime.datetime.strptime(end, worker.DEFAULT_FORMAT) - datetime.timedelta(days=31) + datetime.timedelta(seconds=1)).strftime(worker.DEFAULT_FORMAT)
-    latest = os.popen("aws s3 ls s3://infrastructure-storages-useast1-s3bucket/data/ | awk '{print $4}' | sort | tail -n 1").readlines()
+    latest = os.popen("aws s3 ls s3://infrastructure-storages-useast1-s3bucket/new-data/ | awk '{print $4}' | sort | tail -n 1").readlines()
 
     if (len(latest) == 0):
         latest = start
